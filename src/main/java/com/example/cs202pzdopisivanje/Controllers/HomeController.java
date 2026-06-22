@@ -279,7 +279,7 @@ public class HomeController {
      * @param chatId id of the selected chat.
      */
     private void fetchAndDisplayMessages(int chatId) {
-        new Thread(() -> {
+        messagePollingService.submit(() -> {
             try {
                 synchronized (Client.getHandler()) {
                     Client.getHandler().send(new GetMessagesRequest(chatId));
@@ -299,7 +299,7 @@ public class HomeController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).start();
+        });
     }
 
     /**
@@ -556,17 +556,17 @@ public class HomeController {
             return;
         }
 
-        new Thread(() -> {
+        messagePollingService.submit(() -> {
             try {
                 synchronized (Client.getHandler()) {
-                    SendMessageRequest sendMessageRequest = new SendMessageRequest(DbManager.getAccountID(), selectedChat.getChatId(), message);
-                    
+                    SendMessageRequest sendMessageRequest = new SendMessageRequest(
+                            DbManager.getAccountID(), selectedChat.getChatId(), message);
+
                     Client.getHandler().send(sendMessageRequest);
                     Object response = Client.getHandler().tryReceive();
 
                     if (response instanceof SendMessageRequest) {
                         System.out.println("Message sent to chat: " + selectedChat.getChatName());
-
                         Platform.runLater(() -> {
                             if (selectedChat != null) {
                                 fetchAndDisplayMessages(selectedChat.getChatId());
@@ -577,7 +577,7 @@ public class HomeController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).start();
+        });
 
         messageTextArea.clear();
     }
