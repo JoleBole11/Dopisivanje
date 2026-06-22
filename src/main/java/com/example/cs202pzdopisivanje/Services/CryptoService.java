@@ -1,4 +1,4 @@
-package com.example.cs202pzdopisivanje.Network;
+package com.example.cs202pzdopisivanje.Services;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -12,7 +12,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-public class Crypto {
+public class CryptoService {
 
     private static final byte[] KEY_BYTES = "WhatTheSigma1234".getBytes();
     private static final SecretKeySpec KEY = new SecretKeySpec(KEY_BYTES, "AES");
@@ -41,10 +41,10 @@ public class Crypto {
         cipher.init(Cipher.ENCRYPT_MODE, KEY, iv);
         byte[] encrypted = cipher.doFinal(serialized);
 
-        ByteArrayOutputStream combined = new ByteArrayOutputStream();
-        combined.write(iv.getIV());
-        combined.write(encrypted);
-        return combined.toByteArray();
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        result.write(iv.getIV());
+        result.write(encrypted);
+        return result.toByteArray();
     }
 
     public static Object decrypt(byte[] data) throws NoSuchPaddingException, NoSuchAlgorithmException,

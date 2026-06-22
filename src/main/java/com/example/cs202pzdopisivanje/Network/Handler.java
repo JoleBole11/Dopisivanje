@@ -1,6 +1,7 @@
 package com.example.cs202pzdopisivanje.Network;
 
 import com.example.cs202pzdopisivanje.Requests.Request;
+import com.example.cs202pzdopisivanje.Services.CryptoService;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -54,7 +55,7 @@ public class Handler extends Thread implements AutoCloseable {
      */
     public void send(final Request object) throws IOException {
         try {
-            byte[] encrypted = Crypto.encrypt(object);
+            byte[] encrypted = CryptoService.encrypt(object);
             objectOutputStream.writeObject(encrypted);
             objectOutputStream.flush();
         } catch (Exception e) {
@@ -72,7 +73,7 @@ public class Handler extends Thread implements AutoCloseable {
     public Request receive() throws IOException, ClassNotFoundException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         try {
             byte[] encrypted = (byte[]) objectInputStream.readObject();
-            return (Request) Crypto.decrypt(encrypted);
+            return (Request) CryptoService.decrypt(encrypted);
         } catch (IOException | ClassNotFoundException | NoSuchPaddingException | NoSuchAlgorithmException |
                  InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
                  IllegalBlockSizeException e) {
@@ -89,11 +90,9 @@ public class Handler extends Thread implements AutoCloseable {
         try {
             return receive();
         } catch (EOFException eof) {
-            // Peer closed the connection cleanly (or crashed). Treat as "disconnected".
             return null;
         } catch (IOException | ClassNotFoundException | InvalidAlgorithmParameterException | NoSuchPaddingException |
                  IllegalBlockSizeException | NoSuchAlgorithmException | BadPaddingException | InvalidKeyException e) {
-            // Keep as unchecked for now, but preserve the cause.
             throw new RuntimeException("Failed to receive object from server.", e);
         }
     }
