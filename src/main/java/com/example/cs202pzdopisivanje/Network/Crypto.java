@@ -5,14 +5,12 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64;
 
 public class Crypto {
 
@@ -43,28 +41,26 @@ public class Crypto {
         cipher.init(Cipher.ENCRYPT_MODE, KEY, iv);
         byte[] encrypted = cipher.doFinal(serialized);
 
-        byte[] result = new byte[IV_LENGTH_BYTE + encrypted.length];
-        System.arraycopy(iv.getIV(), 0, result, 0, IV_LENGTH_BYTE);
-        System.arraycopy(encrypted, 0, result, IV_LENGTH_BYTE, encrypted.length);
-
-        return result;
+        ByteArrayOutputStream combined = new ByteArrayOutputStream();
+        combined.write(iv.getIV());
+        combined.write(encrypted);
+        return combined.toByteArray();
     }
 
     public static Object decrypt(byte[] data) throws NoSuchPaddingException, NoSuchAlgorithmException,
             InvalidAlgorithmParameterException, InvalidKeyException,
             BadPaddingException, IllegalBlockSizeException, IOException, ClassNotFoundException {
 
-        byte[] iv = new byte[IV_LENGTH_BYTE];
-        byte[] encrypted = new byte[data.length - IV_LENGTH_BYTE];
-        System.arraycopy(data, 0, iv, 0, IV_LENGTH_BYTE);
-        System.arraycopy(data, IV_LENGTH_BYTE, encrypted, 0, encrypted.length);
+        ByteArrayInputStream bis = new ByteArrayInputStream(data);
+        byte[] iv = bis.readNBytes(IV_LENGTH_BYTE);
+        byte[] encrypted = bis.readAllBytes();
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, KEY, new GCMParameterSpec(T_LENGTH_BIT, iv));
         byte[] serialized = cipher.doFinal(encrypted);
 
-        ByteArrayInputStream bis = new ByteArrayInputStream(serialized);
-        ObjectInputStream ois = new ObjectInputStream(bis);
+        ByteArrayInputStream objBis = new ByteArrayInputStream(serialized);
+        ObjectInputStream ois = new ObjectInputStream(objBis);
         return ois.readObject();
     }
 }
